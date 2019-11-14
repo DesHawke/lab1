@@ -1,15 +1,15 @@
 %%%-------------------------------------------------------------------
-%%% @author user
-%%% @copyright (C) 2019, <COMPANY>
+%%% @author Egor
+%%% @copyright (C) 2019, AltSTU
 %%% @doc
 %%%
 %%% @end
 %%% Created : 12. нояб. 2019 9:54
 %%%-------------------------------------------------------------------
--module(testavl).
--author("user").
--compile(export_all).
-%%-export(export_all).
+-module(lab_avl).
+-author("Egor").
+
+-export([new/1, new/0, insert/2, delete/2, prev_traverse/1, mid_traverse/1, last_traverse/1]).
 
 
 %%%*_ MACROS and SPECS =========================================================
@@ -53,7 +53,7 @@ delete(#node{ key = Root, left = Left, right = Right} = OldTree, Key) ->
       case Right of
         ?undef -> Left;
         _      ->
-          {NewRoot} = get_min(Right),
+          NewRoot = get_min(Right),
           update_tree(OldTree#node{ key = NewRoot, right = deletemin(Right)}, delete_right)
       end;
     Key > Root ->
@@ -91,20 +91,18 @@ last_traverse(#node{key = Root, left = Left,   right = Right  }) -> last_travers
 update_tree(#node{ left = Left, right = Right } = Tree, Key, insert_left) ->
   case height(Left) - height(Right) == 2 of
     true ->
-      if
-        Key < Left#node.key ->
-          left_left_rotation(Tree);
-        true ->
-          left_right_rotation(Tree)
+      case Key < Left#node.key of
+        true -> left_left_rotation(Tree);
+        false -> left_right_rotation(Tree)
       end;
-    false ->
-      update_height(Tree)
+    false -> update_height(Tree)
   end;
 update_tree(#node{ left = Left, right = Right } = Tree, Key, insert_right) ->
   case height(Right) - height(Left) == 2 of
     true ->
-      if Key > Right#node.key -> right_right_rotation(Tree);
-        true -> right_left_rotation(Tree)
+      case Key > Right#node.key of
+        true -> right_right_rotation(Tree);
+        false -> right_left_rotation(Tree)
       end;
     false ->
       update_height(Tree)
@@ -118,7 +116,6 @@ deletemin(#node{left = ?undef, right = Right}) -> Right;
 deletemin(#node{left = Left} = OldTree) ->
   case Left#node.left of
     ?undef ->
-      %% found min
       update_tree(OldTree#node{left = Left#node.right},
         delete_left);
     _ ->
@@ -126,92 +123,44 @@ deletemin(#node{left = Left} = OldTree) ->
         delete_left)
   end.
 
-update_tree(#node{ left = Left
-  , right = Right
-} = Tree,
-    delete_left) ->
+update_tree(#node{ left = Left, right = Right } = Tree, delete_left) ->
   case height(Right) - height(Left) == 2 of
     true ->
       case height(Right#node.left) > height(Right#node.right) of
-        true ->
-          right_left_rotation(Tree);
-        false ->
-          right_right_rotation(Tree)
+        true -> right_left_rotation(Tree);
+        false -> right_right_rotation(Tree)
       end;
     false ->
       update_height(Tree)
   end;
-update_tree(#node{ left = Left
-  , right = Right
-} = Tree,
-    delete_right) ->
+update_tree(#node{ left = Left, right = Right } = Tree, delete_right) ->
   case height(Left) - height(Right) == 2 of
     true ->
       case height(Left#node.right) > height(Left#node.left) of
-        true ->
-          left_right_rotation(Tree);
-        false ->
-          left_left_rotation(Tree)
+        true -> left_right_rotation(Tree);
+        false -> left_left_rotation(Tree)
       end;
-    false ->
-      update_height(Tree)
+    false -> update_height(Tree)
   end.
 
-%%
-%%     4             4
-%%    / \  insert   / \     LL
-%%   2   5 =====>  2   5  ======>  2
-%%  / \           / \             / \
-%% 1   3         1   3           1   4
-%%              /               /   / \
-%%             0               0   3   5
-%%
 left_left_rotation(#node{left = OldLeft} = OldTree) ->
   NewRight = update_height(OldTree#node{left = OldLeft#node.right}),
   update_height(OldLeft#node{right = NewRight}).
 
-%%
-%%     1              1
-%%    / \   insert   / \     RR
-%%   0   3  =====>  0   3  ======>   3
-%%      / \            / \          / \
-%%     2  4           2   4        1   4
-%%                         \      / \   \
-%%                          5    0   2   5
-%%
 right_right_rotation(#node{right = OldRight} = OldTree) ->
   NewLeft = update_height(OldTree#node{right = OldRight#node.left}),
   update_height(OldRight#node{left = NewLeft}).
 
-%%
-%%     2              2               2
-%%    / \  insert    / \     LL      / \    RR
-%%   0   10 =====>  0  10  ======>  0   3  ====>    3
-%%       / \           / \               \         / \
-%%      3  11         3  11              10       2  10
-%%                     \                 / \     /   / \
-%%                      9               9   11  0   9  11
-%%
 right_left_rotation(#node{right = OldRight} = OldTree) ->
   NewRight = left_left_rotation(OldRight),
   right_right_rotation(OldTree#node{right = NewRight}).
 
-%%
-%%     8             8               8            7
-%%    / \  insert   / \     RR      / \    LL    / \
-%%   5   9 =====>  5   9  ======>  7   9  ====> 5   8
-%%  / \           / \             /            / \   \
-%% 3   7         3   7           5            3   6   9
-%%                  /           / \
-%%                 6           3   6
-%%
 left_right_rotation(#node{left = OldLeft} = OldTree) ->
   NewLeft = right_right_rotation(OldLeft),
   left_left_rotation(OldTree#node{left = NewLeft}).
 
 update_height(#node{left = Left, right = Right} = Tree) ->
-  Height = erlang:max(height(Left), height(Right)) + 1,
-  Tree#node{height = Height}.
+  Tree#node{height = erlang:max(height(Left), height(Right)) + 1}.
 
 height(?undef) -> 0;
 height(#node{height = Height}) -> Height.
